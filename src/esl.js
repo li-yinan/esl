@@ -583,6 +583,28 @@ var esl;
     }
 
     /**
+     * 获取函数注释, 没注释返回空字符串
+     *
+     * @param {function} func 函数
+     * @param {string} factoryStr factory toString的结果
+     *
+     * @return {string}
+     */
+    function getComment(func, factoryStr) {
+        var firstPart = factoryStr.split(func.toString())[0];
+        var comment = '';
+        // 验证倒数第二行是不是注释
+        // 如果是注释，则当前函数有注释，不是就没有
+        var lines = firstPart.split(/\n|\r\n/);
+        if (lines.length > 1 && /\*\//.test(lines[lines.length-2])) {
+            firstPart.replace(/(\/\*([\s\S]*?)\*\/)/mg, function ($1) {
+                comment = $1;
+            });
+        }
+        return comment;
+    }
+
+    /**
      * 初始化模块定义时所需的factory执行器
      *
      * @inner
@@ -624,6 +646,7 @@ var esl;
                 try {
                     // 调用factory函数初始化module
                     var factory = mod.factory;
+                    var factoryStr = factory.toString();
                     var exports = typeof factory === 'function'
                         ? factory.apply(global, modGetModulesExports(
                                 mod.factoryDeps,
@@ -634,6 +657,18 @@ var esl;
                                 }
                             ))
                         : factory;
+
+                    if (typeof factory === 'function' && exports instanceof Object) {
+                        // 解析每个方法的注释，添加到方法上
+                        for (var key in exports) {
+                            if (exports.hasOwnProperty(key)) {
+                                var item = exports[key];
+                                if (typeof item === 'function') {
+                                    item.__comment = getComment(item, factoryStr);
+                                }
+                            }
+                        }
+                    }
 
                     if (exports != null) {
                         mod.exports = exports;
