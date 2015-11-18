@@ -659,12 +659,26 @@ var esl;
                         : factory;
 
                     if (typeof factory === 'function' && exports instanceof Object) {
-                        // 解析每个方法的注释，添加到方法上
-                        for (var key in exports) {
-                            if (exports.hasOwnProperty(key)) {
-                                var item = exports[key];
-                                if (typeof item === 'function') {
-                                    item.__comment = getComment(item, factoryStr);
+                        if (typeof exports === 'function') {
+                            exports.__comment = getComment(exports, factoryStr);
+                            var proto = exports.prototype;
+                            for (var key in proto) {
+                                if (proto.hasOwnProperty(key)) {
+                                    var item = proto[key];
+                                    if (typeof item === 'function') {
+                                        item.__comment = getComment(item, factoryStr);
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            // 解析每个方法的注释，添加到方法上
+                            for (var key in exports) {
+                                if (exports.hasOwnProperty(key)) {
+                                    var item = exports[key];
+                                    if (typeof item === 'function') {
+                                        item.__comment = getComment(item, factoryStr);
+                                    }
                                 }
                             }
                         }
